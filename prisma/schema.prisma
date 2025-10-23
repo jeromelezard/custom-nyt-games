@@ -1,0 +1,121 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider      = "prisma-client-js"
+    binaryTargets = ["darwin-arm64", "rhel-openssl-3.0.x"]
+    output        = "../lib/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model ConnectionsGame {
+    connectionsGameId String @id @default(uuid())
+
+    mistakesAllowed    Int                   @default(4)
+    categories         ConnectionsCategory[]
+    ConnectionsAttempt ConnectionsAttempt[]
+}
+
+model ConnectionsCategory {
+    connectionsCategoryId String @id @default(uuid())
+    title                 String
+    difficulty            Int
+
+    // Relations
+    connectionsGameId String
+    connectionsGame   ConnectionsGame   @relation(fields: [connectionsGameId], references: [connectionsGameId], onDelete: Cascade)
+    words             ConnectionsWord[]
+}
+
+model ConnectionsWord {
+    connectionsWordId     String               @id @default(uuid())
+    word                  String
+    position              Int
+    connectionsCategoryId String
+    ConnectionsCategory   ConnectionsCategory? @relation(fields: [connectionsCategoryId], references: [connectionsCategoryId])
+}
+
+model ConnectionsAttempt {
+    connectionsAttemptId String @id @default(uuid())
+
+    connectionsGameId String
+    connectionsGame   ConnectionsGame @relation(fields: [connectionsGameId], references: [connectionsGameId], onDelete: Cascade)
+
+    puzzleComplete     Boolean  @default(false)
+    puzzleWon          Boolean  @default(false)
+    mistakes           Int      @default(0)
+    guesses            Json
+    solvedCategories   Json
+    dateAttemptStarted DateTime
+
+    user   User?   @relation(fields: [userId], references: [id])
+    userId String?
+}
+
+model User {
+    id                 String               @id
+    name               String
+    email              String
+    emailVerified      Boolean              @default(false)
+    image              String?
+    createdAt          DateTime             @default(now())
+    updatedAt          DateTime             @default(now()) @updatedAt
+    sessions           Session[]
+    accounts           Account[]
+    ConnectionsAttempt ConnectionsAttempt[]
+
+    @@unique([email])
+    @@map("user")
+}
+
+model Session {
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([token])
+    @@map("session")
+}
+
+model Account {
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@map("account")
+}
+
+model Verification {
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now()) @updatedAt
+
+    @@map("verification")
+}
