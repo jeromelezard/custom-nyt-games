@@ -33,8 +33,8 @@ export default function SignIn() {
 
     return (
         <div className="w-full h-screen flex flex-col  justify-center gap-5 max-w-sm">
-            <Link href="/" className="flex flex-row items-center gap-3 mb-2">
-                <span className="font-extrabold ">Custom NYT</span>
+            <Link href="/" className="flex flex-row items-center gap-3">
+                <span className="font-extrabold">Custom Connections</span>
             </Link>
             <header>
                 <h1 className="mb-1">Sign in to continue</h1>

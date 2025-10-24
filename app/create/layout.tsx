@@ -1,12 +1,13 @@
-import CreateButtons from "@/components/CreateButtons";
 import Header from "@/components/layout/Header";
-import SignOutButton from "@/components/SignOutButton";
 import { auth } from "@/lib/auth";
-import { signOut } from "@/lib/auth-actions";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function Home() {
+export default async function CreatePage({
+    children,
+}: Readonly<{
+    children: React.ReactNode;
+}>) {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
@@ -15,9 +16,9 @@ export default async function Home() {
     }
 
     return (
-        <div className="flex flex-col items-center justify-center">
+        <div>
             <Header session={session} />
-            <CreateButtons />
+            {children}
         </div>
     );
 }
