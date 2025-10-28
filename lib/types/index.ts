@@ -3,8 +3,6 @@ import { auth } from "../auth";
 import { createAuthClient } from "better-auth/react";
 const authClient = createAuthClient();
 
-export interface ConnectionsAttempt {}
-
 export enum AuthProvider {
     Google = "Google",
     Microsoft = "Microsoft",
@@ -17,3 +15,7 @@ export interface PropsWithClass {
 
 export type BetterAuthSession = typeof auth.$Infer.Session;
 export type BetterAuthClientSession = typeof authClient.$Infer.Session;
+
+export interface PropsWithParams {
+    params: Promise<{ slug: string }>;
+}

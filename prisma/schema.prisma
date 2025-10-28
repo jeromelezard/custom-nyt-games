@@ -23,7 +23,11 @@ model ConnectionsGame {
     connectionsGameId String @id @default(uuid())
 
     mistakesAllowed    Int                   @default(4)
-    completed          Boolean               @default(false)
+    finalised          Boolean               @default(false)
+    userId             String
+    user               User                  @relation(fields: [userId], references: [id])
+    dateCreated        DateTime              @default(now())
+    dateUpdated        DateTime              @default(now())
     categories         ConnectionsCategory[]
     ConnectionsAttempt ConnectionsAttempt[]
 }
@@ -31,7 +35,7 @@ model ConnectionsGame {
 model ConnectionsCategory {
     connectionsCategoryId String @id @default(uuid())
     title                 String
-    difficulty            Int
+    difficulty            Int    @default(0)
 
     // Relations
     connectionsGameId String
@@ -78,6 +82,7 @@ model User {
     sessions           Session[]
     accounts           Account[]
     ConnectionsAttempt ConnectionsAttempt[]
+    ConnectionsGame    ConnectionsGame[]
 
     @@unique([email])
     @@map("user")

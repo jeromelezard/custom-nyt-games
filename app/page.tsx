@@ -17,7 +17,7 @@ export default async function Home() {
     return (
         <div className="flex flex-col items-center justify-center">
             <Header session={session} />
-            <CreateButtons />
+            <CreateButtons user={session.user} />
         </div>
     );
 }
