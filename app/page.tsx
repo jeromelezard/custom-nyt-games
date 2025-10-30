@@ -1,8 +1,7 @@
 import CreateButtons from "@/components/CreateButtons";
 import Header from "@/components/layout/Header";
-import SignOutButton from "@/components/SignOutButton";
+import OngoingCreations from "@/components/OngoingCreations";
 import { auth } from "@/lib/auth";
-import { signOut } from "@/lib/auth-actions";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -18,6 +17,7 @@ export default async function Home() {
         <div className="flex flex-col items-center justify-center">
             <Header session={session} />
             <CreateButtons user={session.user} />
+            <OngoingCreations session={session} />
         </div>
     );
 }

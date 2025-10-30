@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-
 import { BetterAuthSession } from "@/lib/types";
 import SignOutButton from "../SignOutButton";
 import { ModeToggle } from "../ui/theme-toggle";

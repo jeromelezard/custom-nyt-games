@@ -25,7 +25,7 @@ export default function CreateButtons({ user }: { user: User }) {
 
     return (
         <div className="flex flex-col gap-3">
-            <h1>Create your own games</h1>
+            <h1>Create new game</h1>
             <div className="flex flex-col gap-3 ">
                 <Button className="cursor-pointer" onClick={createConnections} disabled={loading}>
                     {loading ? <Spinner /> : "Connections"}
@@ -34,6 +34,7 @@ export default function CreateButtons({ user }: { user: User }) {
                 <Button disabled> Wordle</Button>
             </div>
             {error && <div>An error occured</div>}
+            {/* TODO PROPER ERROR HANDLING */}
         </div>
     );
 }

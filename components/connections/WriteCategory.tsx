@@ -1,6 +1,6 @@
 "use client";
 import { ConnectionsCategory } from "@/lib/generated/prisma";
-import { faEdit } from "@fortawesome/free-solid-svg-icons";
+import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -9,13 +9,16 @@ import { Input } from "../ui/input";
 interface WriteCategoryProps {
     category: ConnectionsCategory;
     index: number;
-    updateCategoryTitle: (title: string) => void;
+    onUpdate: (category: ConnectionsCategory) => void;
+    onDelete: (category: ConnectionsCategory) => void;
 }
 
-export default function WriteCategory({ category, index, updateCategoryTitle }: WriteCategoryProps) {
+export default function WriteCategory({ category, index, onUpdate, onDelete }: WriteCategoryProps) {
+    const [deleteDialog, setDeleteDialog] = useState(false);
     const [currentWord, setCurrentWord] = useState("");
-    const [newTitle, setNewTitle] = useState("");
+    const [newTitle, setNewTitle] = useState(category.title == "" ? `Category ${index + 1}` : category.title);
     const [editTitle, setEditTitle] = useState(false);
+
     const [categoryWords, setCategoryWords] = useState<string[]>([]);
     function addCategoryWord(newWord: string) {
         setCategoryWords((prevCategoryWords) => [...prevCategoryWords, newWord]);
@@ -27,25 +30,34 @@ export default function WriteCategory({ category, index, updateCategoryTitle }: 
             <div className="flex items-center gap-3">
                 {editTitle ? (
                     <>
-                        <Input type="text" value={category.title || `Category ${index + 1}`} onChange={(e) => setNewTitle(e.target.value)} />
-                        <Button type="submit" variant="outline" disabled={categoryWords.length > 6} onClick={() => updateCategoryTitle(newTitle)}>
+                        <Input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                        <Button variant={"outline"} onClick={() => setEditTitle(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            disabled={categoryWords.length > 6}
+                            onClick={() => {
+                                setEditTitle(false);
+                                onUpdate({ ...category, title: newTitle });
+                            }}
+                        >
                             Confirm
                         </Button>
                     </>
                 ) : (
-                    <h2 className="font-semibold text-xl">Category {index + 1}</h2>
+                    <h2 className="font-semibold text-xl">{newTitle}</h2>
                 )}
 
-                <FontAwesomeIcon icon={faEdit} className="cursor-pointer" onClick={() => setEditTitle(true)} />
+                {!editTitle && (
+                    <>
+                        <FontAwesomeIcon icon={faEdit} className="cursor-pointer" onClick={() => setEditTitle(true)} />
+                        <FontAwesomeIcon icon={faTrash} className="cursor-pointer text-red-400" onClick={() => onDelete(category)} />
+                    </>
+                )}
             </div>
-            <div className="mt-2 flex gap-3 items-center">
-                <div className="flex w-full max-w-sm items-center gap-2">
-                    <Input type="text" placeholder="Add word..." value={currentWord} onChange={(e) => setCurrentWord(e.target.value)} />
-                    <Button type="submit" variant="outline" disabled={categoryWords.length > 6} onClick={() => addCategoryWord(currentWord)}>
-                        Add
-                    </Button>
-                </div>
-            </div>
+
             <div className="flex gap-3 mt-3">
                 {categoryWords.map((word, idx) => (
                     <Button

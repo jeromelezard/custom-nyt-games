@@ -20,10 +20,11 @@ datasource db {
 }
 
 model ConnectionsGame {
-    connectionsGameId String @id @default(uuid())
-
+    connectionsGameId  String                @id @default(uuid())
+    title              String?
     mistakesAllowed    Int                   @default(4)
     finalised          Boolean               @default(false)
+    maxWords           Int                   @default(4)
     userId             String
     user               User                  @relation(fields: [userId], references: [id])
     dateCreated        DateTime              @default(now())
