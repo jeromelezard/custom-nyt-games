@@ -1,53 +1,53 @@
 "use client";
-import { ConnectionsCategory } from "@/lib/generated/prisma";
-import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
+
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { ConnectionsCategoryWithWords } from "@/lib/types/prisma";
+import AddCategoryWordDialog from "./AddCategoryWordDialog";
+import { addWord } from "@/lib/connections/server-actions";
 
 interface WriteCategoryProps {
-    category: ConnectionsCategory;
-    index: number;
-    onUpdate: (category: ConnectionsCategory) => void;
-    onDelete: (category: ConnectionsCategory) => void;
+    category: ConnectionsCategoryWithWords;
+    onUpdate: (category: ConnectionsCategoryWithWords) => void;
+    onDelete: (category: ConnectionsCategoryWithWords) => void;
+    onUpdateWords: () => void;
+    maxWords: number;
 }
 
-export default function WriteCategory({ category, index, onUpdate, onDelete }: WriteCategoryProps) {
-    const [deleteDialog, setDeleteDialog] = useState(false);
-    const [currentWord, setCurrentWord] = useState("");
-    const [newTitle, setNewTitle] = useState(category.title == "" ? `Category ${index + 1}` : category.title);
+export default function WriteCategory({ category, onUpdate, onDelete, onUpdateWords, maxWords }: WriteCategoryProps) {
+    const [title, setTitle] = useState(category.title ? category.title : `Unnamed category`);
     const [editTitle, setEditTitle] = useState(false);
+    const [addWordDialog, setAddWordDialog] = useState(false);
 
-    const [categoryWords, setCategoryWords] = useState<string[]>([]);
-    function addCategoryWord(newWord: string) {
-        setCategoryWords((prevCategoryWords) => [...prevCategoryWords, newWord]);
-        setCurrentWord("");
+    async function handleAddWord(word: string) {
+        if (category.words.length > maxWords) return false;
+        const words = await addWord(category, word);
     }
-
     return (
         <div className="flex flex-col">
             <div className="flex items-center gap-3">
                 {editTitle ? (
                     <>
-                        <Input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} />
+                        <Input type="text" value={title ?? ""} onChange={(e) => setTitle(e.target.value)} />
                         <Button variant={"outline"} onClick={() => setEditTitle(false)}>
                             Cancel
                         </Button>
                         <Button
                             type="submit"
                             variant="outline"
-                            disabled={categoryWords.length > 6}
                             onClick={() => {
                                 setEditTitle(false);
-                                onUpdate({ ...category, title: newTitle });
+                                onUpdate({ ...category, title: title });
                             }}
                         >
                             Confirm
                         </Button>
                     </>
                 ) : (
-                    <h2 className="font-semibold text-xl">{newTitle}</h2>
+                    <h2 className="font-semibold text-xl">{title}</h2>
                 )}
 
                 {!editTitle && (
@@ -59,17 +59,28 @@ export default function WriteCategory({ category, index, onUpdate, onDelete }: W
             </div>
 
             <div className="flex gap-3 mt-3">
-                {categoryWords.map((word, idx) => (
+                {category.words.map((word) => (
                     <Button
-                        key={idx}
-                        disabled
+                        key={word.connectionsWordId}
                         variant="outline"
                         className="aspect-square rounded-lg cursor-pointer h-20 w-20 flex justify-center items-center text-xl"
+                        onClick={() => setAddWordDialog(true)}
                     >
-                        {word}
+                        {word.word}
+                    </Button>
+                ))}
+                {[...Array(maxWords - category.words.length)].map((word, idx) => (
+                    <Button
+                        key={idx}
+                        variant="outline"
+                        className="aspect-square rounded-lg cursor-pointer h-20 w-20 flex justify-center items-center text-xl"
+                        onClick={() => setAddWordDialog(true)}
+                    >
+                        <FontAwesomeIcon icon={faPlus} />
                     </Button>
                 ))}
             </div>
+            <AddCategoryWordDialog open={addWordDialog} setOpen={setAddWordDialog} addWord={handleAddWord} />
         </div>
     );
 }

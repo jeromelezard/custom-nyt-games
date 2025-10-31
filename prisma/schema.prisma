@@ -34,9 +34,9 @@ model ConnectionsGame {
 }
 
 model ConnectionsCategory {
-    connectionsCategoryId String @id @default(uuid())
-    title                 String
-    difficulty            Int    @default(0)
+    connectionsCategoryId String  @id @default(uuid())
+    title                 String?
+    difficulty            Int     @default(0)
 
     // Relations
     connectionsGameId String
@@ -47,7 +47,7 @@ model ConnectionsCategory {
 model ConnectionsWord {
     connectionsWordId     String               @id @default(uuid())
     word                  String
-    position              Int
+    position              Int?
     connectionsCategoryId String
     ConnectionsCategory   ConnectionsCategory? @relation(fields: [connectionsCategoryId], references: [connectionsCategoryId])
 }
