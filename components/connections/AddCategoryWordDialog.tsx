@@ -3,14 +3,16 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
+import { ConnectionsWord } from "@/lib/generated/prisma";
 
 interface AddCategoryWordDialogProps {
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
     addWord: (word: string) => void;
+    updateWord: (word: string) => void;
 }
 
-export default function AddCategoryWordDialog({ open, setOpen, addWord }: AddCategoryWordDialogProps) {
+export default function AddCategoryWordDialog({ open, setOpen, addWord, updateWord }: AddCategoryWordDialogProps) {
     const [word, setWord] = useState("");
     function handleSubmitWord() {
         addWord(word);

@@ -7,7 +7,8 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { ConnectionsCategoryWithWords } from "@/lib/types/prisma";
 import AddCategoryWordDialog from "./AddCategoryWordDialog";
-import { addWord } from "@/lib/connections/server-actions";
+import { addWord, updateWord } from "@/lib/connections/server-actions";
+import { ConnectionsWord } from "@/lib/generated/prisma";
 
 interface WriteCategoryProps {
     category: ConnectionsCategoryWithWords;
@@ -21,11 +22,19 @@ export default function WriteCategory({ category, onUpdate, onDelete, onUpdateWo
     const [title, setTitle] = useState(category.title ? category.title : `Unnamed category`);
     const [editTitle, setEditTitle] = useState(false);
     const [addWordDialog, setAddWordDialog] = useState(false);
+    const [wordToUpdate, setWordToUpdate] = useState<ConnectionsWord | null>(null);
 
     async function handleAddWord(word: string) {
         if (category.words.length > maxWords) return false;
-        const words = await addWord(category, word);
+        await addWord(category, word);
     }
+
+    async function handleUpdateWord(word: string) {
+        if (!wordToUpdate) return false;
+        await updateWord(wordToUpdate, word);
+        setWordToUpdate(null);
+    }
+
     return (
         <div className="flex flex-col">
             <div className="flex items-center gap-3">
@@ -69,7 +78,7 @@ export default function WriteCategory({ category, onUpdate, onDelete, onUpdateWo
                         {word.word}
                     </Button>
                 ))}
-                {[...Array(maxWords - category.words.length)].map((word, idx) => (
+                {[...Array(maxWords - category.words.length)].map((_, idx) => (
                     <Button
                         key={idx}
                         variant="outline"
@@ -80,7 +89,7 @@ export default function WriteCategory({ category, onUpdate, onDelete, onUpdateWo
                     </Button>
                 ))}
             </div>
-            <AddCategoryWordDialog open={addWordDialog} setOpen={setAddWordDialog} addWord={handleAddWord} />
+            <AddCategoryWordDialog open={addWordDialog} setOpen={setAddWordDialog} addWord={handleAddWord} updateWord={handleUpdateWord} />
         </div>
     );
 }

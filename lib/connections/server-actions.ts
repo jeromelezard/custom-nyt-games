@@ -1,6 +1,6 @@
 "use server";
 
-import { ConnectionsCategory } from "../generated/prisma";
+import { ConnectionsCategory, ConnectionsWord } from "../generated/prisma";
 import prisma from "../prisma";
 import { BetterAuthSession } from "../types";
 
@@ -22,6 +22,10 @@ export async function updateCategory(category: ConnectionsCategory) {
 
 export async function addWord(category: ConnectionsCategory, word: string) {
     return await prisma.connectionsWord.create({ data: { word, connectionsCategoryId: category.connectionsCategoryId } });
+}
+
+export async function updateWord(word: ConnectionsWord, newWord: string) {
+    return await prisma.connectionsWord.update({ where: { connectionsWordId: word.connectionsWordId }, data: { word: newWord } });
 }
 
 export async function deleteCategory(category: ConnectionsCategory) {
