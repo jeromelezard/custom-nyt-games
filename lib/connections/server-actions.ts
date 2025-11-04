@@ -20,12 +20,31 @@ export async function updateCategory(category: ConnectionsCategory) {
     return await prisma.connectionsCategory.update({ where: { connectionsCategoryId: category.connectionsCategoryId }, data: { ...category } });
 }
 
+export async function getCategoryWords(category: ConnectionsCategory) {
+    return await prisma.connectionsWord.findMany({
+        where: { connectionsCategoryId: category.connectionsCategoryId },
+        orderBy: { positionInCategory: "asc" },
+    });
+}
+
 export async function addWord(category: ConnectionsCategory, word: string) {
     return await prisma.connectionsWord.create({ data: { word, connectionsCategoryId: category.connectionsCategoryId } });
 }
 
-export async function updateWord(word: ConnectionsWord, newWord: string) {
-    return await prisma.connectionsWord.update({ where: { connectionsWordId: word.connectionsWordId }, data: { word: newWord } });
+export async function updateWord(word: ConnectionsWord) {
+    return await prisma.connectionsWord.update({ where: { connectionsWordId: word.connectionsWordId }, data: { ...word } });
+}
+
+export async function reOrderWordsInCategory(words: ConnectionsWord[]) {
+    const updatedWords = words.map((word, idx) =>
+        prisma.connectionsWord.update({ where: { connectionsWordId: word.connectionsWordId }, data: { positionInCategory: idx + 1 } })
+    );
+
+    return await prisma.$transaction(updatedWords);
+}
+
+export async function deleteWord(word: ConnectionsWord) {
+    return await prisma.connectionsWord.delete({ where: { connectionsWordId: word.connectionsWordId } });
 }
 
 export async function deleteCategory(category: ConnectionsCategory) {

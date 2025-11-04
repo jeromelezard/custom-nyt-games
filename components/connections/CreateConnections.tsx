@@ -2,14 +2,14 @@
 import { useState } from "react";
 import { Button } from "../ui/button";
 import WriteCategory from "./WriteCategory";
-import { ConnectionsCategoryWithWords, ConnectionsGameWithCategories } from "@/lib/types/prisma";
+import { ConnectionsGameWithCategories } from "@/lib/types/prisma";
 import { createBlankConnectionsCategory, deleteCategory, updateCategory, updateCategoryMaxWords } from "@/lib/connections/server-actions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import DeleteConnectionsDialog from "./DeleteConnectionsDialog";
 import ConnectionsAlert from "./ConnectionsAlert";
 import { NativeSelect, NativeSelectOption } from "../ui/native-select";
-import { ConnectionsWord } from "@/lib/generated/prisma";
+import { ConnectionsCategory } from "@/lib/generated/prisma";
 
 interface CreateConnectionsProps {
     connectionsGame: ConnectionsGameWithCategories;
@@ -18,13 +18,20 @@ interface CreateConnectionsProps {
 export default function CreateConnections({ connectionsGame }: CreateConnectionsProps) {
     const [game, setGame] = useState<ConnectionsGameWithCategories>(connectionsGame);
     const [deleteDialog, setDeleteDialog] = useState(false);
-    const [categoryToDelete, setCategoryToDelete] = useState<ConnectionsCategoryWithWords | null>(null);
+    const [categoryToDelete, setCategoryToDelete] = useState<ConnectionsCategory | null>(null);
     const [connectionsError, setConnectionsError] = useState(false);
     const [categoryMaxWords, setCategoryMaxWords] = useState(connectionsGame.maxWords);
 
-    async function addCategory() {
+    async function handleAddCategory() {
         const connectionsCategoryId = crypto.randomUUID();
-        const category = { connectionsCategoryId, connectionsGameId: game.connectionsGameId, difficulty: 0, title: null, words: [] };
+        const category: ConnectionsCategory = {
+            connectionsCategoryId,
+            connectionsGameId: game.connectionsGameId,
+            difficulty: 0,
+            title: null,
+            dateCreated: new Date(),
+            dateUpdated: new Date(),
+        };
         setGame((prev) => ({
             ...prev,
             categories: [...prev.categories, category],
@@ -38,7 +45,7 @@ export default function CreateConnections({ connectionsGame }: CreateConnections
         }
     }
 
-    async function handleUpdateCategory(category: ConnectionsCategoryWithWords, words?: ConnectionsWord[]) {
+    async function handleUpdateCategory(category: ConnectionsCategory) {
         setGame((prev) => ({
             ...prev,
             categories: prev.categories.map((c) => (c.connectionsCategoryId == category.connectionsCategoryId ? category : c)),
@@ -46,7 +53,7 @@ export default function CreateConnections({ connectionsGame }: CreateConnections
         await updateCategory(category);
     }
 
-    function handleDeleteCategory(category: ConnectionsCategoryWithWords) {
+    function handleDeleteCategory(category: ConnectionsCategory) {
         setCategoryToDelete(category);
         setDeleteDialog(true);
     }
@@ -64,14 +71,14 @@ export default function CreateConnections({ connectionsGame }: CreateConnections
         setCategoryToDelete(null);
     }
 
-    function removeCategoryFromList(category: ConnectionsCategoryWithWords) {
+    function removeCategoryFromList(category: ConnectionsCategory) {
         setGame((prev) => ({
             ...prev,
             categories: prev.categories.filter((c) => c.connectionsCategoryId != category.connectionsCategoryId),
         }));
     }
 
-    function addCategoryToList(category: ConnectionsCategoryWithWords) {
+    function addCategoryToList(category: ConnectionsCategory) {
         setGame((prev) => ({
             ...prev,
             categories: [...prev.categories, category],
@@ -82,8 +89,6 @@ export default function CreateConnections({ connectionsGame }: CreateConnections
         setCategoryMaxWords(parseInt(max));
         await updateCategoryMaxWords(game.connectionsGameId, parseInt(max));
     }
-
-    function updateWords() {}
 
     return (
         <div className="flex flex-col w-full gap-3">
@@ -104,13 +109,12 @@ export default function CreateConnections({ connectionsGame }: CreateConnections
                         category={category}
                         onUpdate={handleUpdateCategory}
                         onDelete={handleDeleteCategory}
-                        onUpdateWords={updateWords}
                         maxWords={categoryMaxWords}
                     />
                 ))}
             </div>
             <div className="flex">
-                <Button onClick={addCategory} className="w-fit" variant={"outline"}>
+                <Button onClick={handleAddCategory} className="w-fit" variant={"outline"}>
                     <FontAwesomeIcon icon={faPlus} />
                     New category
                 </Button>

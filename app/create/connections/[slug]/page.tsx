@@ -14,7 +14,7 @@ export default async function CreateConnectionsPage({ params }: PropsWithParams)
     const { slug } = await params;
     const connectionsGame = await prisma.connectionsGame.findUnique({
         where: { connectionsGameId: slug },
-        include: { categories: { include: { words: true } } },
+        include: { categories: { orderBy: { dateCreated: "asc" } } },
     });
 
     if (!connectionsGame) return notFound();

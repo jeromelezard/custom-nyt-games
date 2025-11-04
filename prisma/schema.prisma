@@ -34,22 +34,26 @@ model ConnectionsGame {
 }
 
 model ConnectionsCategory {
-    connectionsCategoryId String  @id @default(uuid())
+    connectionsCategoryId String            @id @default(uuid())
     title                 String?
-    difficulty            Int     @default(0)
-
+    difficulty            Int               @default(0)
+    dateCreated           DateTime          @default(now())
+    dateUpdated           DateTime          @default(now())
     // Relations
-    connectionsGameId String
-    connectionsGame   ConnectionsGame   @relation(fields: [connectionsGameId], references: [connectionsGameId], onDelete: Cascade)
-    words             ConnectionsWord[]
+    connectionsGameId     String
+    connectionsGame       ConnectionsGame   @relation(fields: [connectionsGameId], references: [connectionsGameId], onDelete: Cascade)
+    words                 ConnectionsWord[]
 }
 
 model ConnectionsWord {
     connectionsWordId     String               @id @default(uuid())
     word                  String
-    position              Int?
+    positionInGrid        Int?
+    positionInCategory    Int?
+    dateCreated           DateTime             @default(now())
+    dateUpdated           DateTime             @default(now())
     connectionsCategoryId String
-    ConnectionsCategory   ConnectionsCategory? @relation(fields: [connectionsCategoryId], references: [connectionsCategoryId])
+    ConnectionsCategory   ConnectionsCategory? @relation(fields: [connectionsCategoryId], references: [connectionsCategoryId], onDelete: Cascade)
 }
 
 model ConnectionsAttempt {

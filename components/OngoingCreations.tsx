@@ -21,6 +21,7 @@ export default function OngoingCreations({ session }: { session: BetterAuthSessi
         setGames(() => games.map((game) => game));
         setLoading(false);
     }
+    if (games.length == 0) return null;
 
     useEffect(() => {
         fetchGames();
@@ -30,7 +31,9 @@ export default function OngoingCreations({ session }: { session: BetterAuthSessi
         <div className="flex flex-col mt-3 gap-3">
             <h2 className="font-semibold text-xl">Ongoing Connections games</h2>
             {loading ? (
-                <Spinner />
+                <span className="flex justify-center">
+                    <Spinner />
+                </span>
             ) : (
                 games.map((game, idx) => (
                     <Button
