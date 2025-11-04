@@ -12,15 +12,7 @@ interface CreateConnectionsWordProps extends ConnectionsWordTileProps {
     reOrderWords: () => Promise<void>;
 }
 
-export default function CreateConnectionsWord({
-    word,
-    reOrderWords,
-    disabled = false,
-    variant,
-    onClick,
-    loading,
-    children,
-}: CreateConnectionsWordProps) {
+export default function CreateConnectionsWord({ word, reOrderWords, children, ...props }: CreateConnectionsWordProps) {
     const controls = useDragControls();
     const [isDragging, setIsDragging] = useState(false);
     return (
@@ -38,9 +30,7 @@ export default function CreateConnectionsWord({
             animate={isDragging ? {} : { scale: 1, boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
         >
             <div className="relative">
-                <ConnectionsWordTile variant={variant} disabled={disabled} onClick={onClick} loading={loading}>
-                    {children}
-                </ConnectionsWordTile>
+                <ConnectionsWordTile {...props}>{children}</ConnectionsWordTile>
                 <FontAwesomeIcon
                     icon={faBars}
                     onPointerDown={(event) => controls.start(event)}

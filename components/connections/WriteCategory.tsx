@@ -10,6 +10,11 @@ import { ConnectionsCategory, ConnectionsWord } from "@/lib/generated/prisma";
 import { Reorder } from "framer-motion";
 import CreateConnectionsWord from "./CreateConnectionsWord";
 import ConnectionsWordTile from "./ConnectionsWordTile";
+import { NativeSelect, NativeSelectOption } from "../ui/native-select";
+import { ConnectionsDifficultiesColours } from "@/lib/connections/types";
+import { connectionsDifficulties } from "@/lib/connections/utils";
+import { ClassName } from "@/lib/types";
+
 interface WriteCategoryProps {
     category: ConnectionsCategory;
     onUpdate: (category: ConnectionsCategory) => void;
@@ -24,6 +29,7 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
     const [editTitle, setEditTitle] = useState(false);
     const [addWordDialog, setAddWordDialog] = useState(false);
     const [wordToUpdate, setWordToUpdate] = useState<ConnectionsWord | null>(null);
+    const [difficulty, setDifficulty] = useState<ClassName | null>(null);
 
     async function fetchCategoryWords() {
         setLoadingWords(true);
@@ -67,8 +73,11 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
     }
 
     async function reOrderWords() {
-        console.log(categoryWords);
         await reOrderWordsInCategory(categoryWords);
+    }
+
+    function handleSetDifficulty(difficulty: string) {
+        setDifficulty(connectionsDifficulties[difficulty as ConnectionsDifficultiesColours] ?? null);
     }
 
     return (
@@ -105,7 +114,7 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
                     </div>
                 )}
             </div>
-            <div className="flex mt-3">
+            <div className="flex mt-3 gap-3 flex-col">
                 <Reorder.Group axis="x" onReorder={setCategoryWords} values={categoryWords} style={{ WebkitOverflowScrolling: "touch" }}>
                     <div className="flex gap-3">
                         {categoryWords.map((word, idx) => (
@@ -113,6 +122,7 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
                                 key={word.connectionsWordId}
                                 word={word}
                                 reOrderWords={reOrderWords}
+                                difficultyShade={difficulty ?? undefined}
                                 loading={loadingWords}
                                 variant={idx >= maxWords ? "destructive" : "outline"}
                                 onClick={() => {
@@ -124,12 +134,29 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
                             </CreateConnectionsWord>
                         ))}
                         {[...Array(Math.max(maxWords - categoryWords.length, 0))].map((_, idx) => (
-                            <ConnectionsWordTile key={idx} variant="outline" onClick={() => setAddWordDialog(true)} loading={loadingWords}>
+                            <ConnectionsWordTile
+                                key={idx}
+                                variant="outline"
+                                onClick={() => setAddWordDialog(true)}
+                                loading={loadingWords}
+                                difficultyShade={difficulty ?? undefined}
+                            >
                                 <FontAwesomeIcon icon={faPlus} />
                             </ConnectionsWordTile>
                         ))}
                     </div>
                 </Reorder.Group>
+                <NativeSelect onChange={(e) => handleSetDifficulty(e.target.value)}>
+                    <NativeSelectOption value={"Select difficulty"}>Select difficulty</NativeSelectOption>
+                    {Object.keys(connectionsDifficulties).map(
+                        (difficulty, idx) =>
+                            idx < maxWords && (
+                                <NativeSelectOption key={idx} value={difficulty}>
+                                    {difficulty}
+                                </NativeSelectOption>
+                            )
+                    )}
+                </NativeSelect>
             </div>
 
             <AddCategoryWordDialog
