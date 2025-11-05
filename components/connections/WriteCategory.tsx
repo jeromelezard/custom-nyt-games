@@ -1,9 +1,8 @@
 "use client";
 
-import { faCheck, faEdit, faPlus, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCog, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useEffect, useState } from "react";
-import { Input } from "../ui/input";
 import AddCategoryWordDialog from "./AddCategoryWordDialog";
 import { addWord, deleteWord, getCategoryWords, reOrderWordsInCategory, updateWord } from "@/lib/connections/server-actions";
 import { ConnectionsCategory, ConnectionsWord } from "@/lib/generated/prisma";
@@ -11,25 +10,26 @@ import { Reorder } from "framer-motion";
 import CreateConnectionsWord from "./CreateConnectionsWord";
 import ConnectionsWordTile from "./ConnectionsWordTile";
 import { NativeSelect, NativeSelectOption } from "../ui/native-select";
-import { ConnectionsDifficultiesColours } from "@/lib/connections/types";
 import { connectionsDifficulties } from "@/lib/connections/utils";
-import { ClassName } from "@/lib/types";
+import { motion } from "framer-motion";
+import EditCategoryDialog from "./EditCategoryDialog";
 
 interface WriteCategoryProps {
     category: ConnectionsCategory;
     onUpdate: (category: ConnectionsCategory) => void;
     onDelete: (category: ConnectionsCategory) => void;
+    onChangeDifficulty: (category: ConnectionsCategory, difficulty: number) => void;
+
     maxWords: number;
 }
 
-export default function WriteCategory({ category, onUpdate, onDelete, maxWords }: WriteCategoryProps) {
+export default function WriteCategory({ category, onUpdate, onDelete, onChangeDifficulty, maxWords }: WriteCategoryProps) {
     const [categoryWords, setCategoryWords] = useState<ConnectionsWord[]>([]);
     const [loadingWords, setLoadingWords] = useState(true);
-    const [title, setTitle] = useState(category.title ? category.title : `Unnamed category`);
-    const [editTitle, setEditTitle] = useState(false);
+    const [editTitleDialog, setEditTitleDialog] = useState(false);
     const [addWordDialog, setAddWordDialog] = useState(false);
     const [wordToUpdate, setWordToUpdate] = useState<ConnectionsWord | null>(null);
-    const [difficulty, setDifficulty] = useState<ClassName | null>(null);
+    const [maxWordError, setMaxWordError] = useState(false);
 
     async function fetchCategoryWords() {
         setLoadingWords(true);
@@ -42,8 +42,23 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
         fetchCategoryWords();
     }, []);
 
+    useEffect(() => {
+        if (categoryWords.length > maxWords) setMaxWordError(true);
+        else setMaxWordError(false);
+    }, [categoryWords.length]);
+
+    useEffect(() => {
+        if (categoryWords.length > maxWords) {
+            onUpdate({ ...category, difficulty: 0 });
+            setMaxWordError(true);
+        } else {
+            setMaxWordError(false);
+        }
+    }, [maxWords]);
+
     async function handleAddWord(word: string) {
-        if (categoryWords.length > maxWords) return false;
+        if (categoryWords.length >= maxWords || word.trim() == "") return false;
+
         const newWord = await addWord(category, word);
         setCategoryWords((prev) => [...prev, newWord]);
     }
@@ -55,8 +70,8 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
         setWordToUpdate(null);
     }
 
-    function handleUpdateTitle() {
-        setEditTitle(false);
+    function handleUpdateTitle(title: string) {
+        setEditTitleDialog(false);
         onUpdate({ ...category, title: title });
     }
 
@@ -69,7 +84,12 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
         if (!wordToUpdate) return false;
         await deleteWord(wordToUpdate);
         setCategoryWords((prev) => prev.filter((word) => word.connectionsWordId != wordToUpdate.connectionsWordId));
-        setAddWordDialog(false);
+        closeWordDialog();
+    }
+
+    function handleDeleteCategory() {
+        onDelete(category);
+        setEditTitleDialog(false);
     }
 
     async function reOrderWords() {
@@ -77,88 +97,80 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
     }
 
     function handleSetDifficulty(difficulty: string) {
-        setDifficulty(connectionsDifficulties[difficulty as ConnectionsDifficultiesColours] ?? null);
+        onChangeDifficulty(category, +difficulty);
+        onUpdate({ ...category, difficulty: +difficulty });
     }
 
     return (
-        <div className="flex flex-col">
+        <motion.div
+            id={category.connectionsCategoryId}
+            key={category.connectionsCategoryId}
+            className="flex flex-col"
+            layout
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
             <div className="flex items-center gap-1">
-                {editTitle ? (
-                    <>
-                        <Input
-                            type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleUpdateTitle()}
-                        />
+                <h2 className="font-semibold text-xl">{category.title || "Unnamed category"}</h2>
 
-                        <FontAwesomeIcon
-                            icon={faXmark}
-                            className="cursor-pointer hover:bg-slate-500 transition-colors p-2 rounded-lg"
-                            onClick={() => setEditTitle(false)}
-                        />
-                        <FontAwesomeIcon
-                            icon={faCheck}
-                            className="cursor-pointer hover:bg-slate-500 transition-colors p-2 rounded-lg"
-                            onClick={handleUpdateTitle}
-                        />
-                    </>
-                ) : (
-                    <h2 className="font-semibold text-xl">{title}</h2>
-                )}
-
-                {!editTitle && (
-                    <div className="ml-2 flex gap-2">
-                        <FontAwesomeIcon icon={faEdit} className="cursor-pointer" onClick={() => setEditTitle(true)} />
-                        <FontAwesomeIcon icon={faTrash} className="cursor-pointer text-red-400" onClick={() => onDelete(category)} />
-                    </div>
-                )}
+                <FontAwesomeIcon icon={faCog} className="cursor-pointer opacity-80" onClick={() => setEditTitleDialog(true)} />
             </div>
             <div className="flex mt-3 gap-3 flex-col">
-                <Reorder.Group axis="x" onReorder={setCategoryWords} values={categoryWords} style={{ WebkitOverflowScrolling: "touch" }}>
-                    <div className="flex gap-3">
-                        {categoryWords.map((word, idx) => (
-                            <CreateConnectionsWord
-                                key={word.connectionsWordId}
-                                word={word}
-                                reOrderWords={reOrderWords}
-                                difficultyShade={difficulty ?? undefined}
-                                loading={loadingWords}
-                                variant={idx >= maxWords ? "destructive" : "outline"}
-                                onClick={() => {
-                                    setWordToUpdate(word);
-                                    setAddWordDialog(true);
-                                }}
-                            >
-                                {word.word}
-                            </CreateConnectionsWord>
-                        ))}
-                        {[...Array(Math.max(maxWords - categoryWords.length, 0))].map((_, idx) => (
-                            <ConnectionsWordTile
-                                key={idx}
-                                variant="outline"
-                                onClick={() => setAddWordDialog(true)}
-                                loading={loadingWords}
-                                difficultyShade={difficulty ?? undefined}
-                            >
-                                <FontAwesomeIcon icon={faPlus} />
-                            </ConnectionsWordTile>
-                        ))}
-                    </div>
-                </Reorder.Group>
-                <NativeSelect onChange={(e) => handleSetDifficulty(e.target.value)}>
-                    <NativeSelectOption value={"Select difficulty"}>Select difficulty</NativeSelectOption>
-                    {Object.keys(connectionsDifficulties).map(
-                        (difficulty, idx) =>
-                            idx < maxWords && (
-                                <NativeSelectOption key={idx} value={difficulty}>
-                                    {difficulty}
-                                </NativeSelectOption>
-                            )
-                    )}
+                <motion.div layout={false}>
+                    <Reorder.Group
+                        axis="x"
+                        layout="position"
+                        onReorder={setCategoryWords}
+                        values={categoryWords}
+                        style={{ WebkitOverflowScrolling: "touch" }}
+                    >
+                        <div className="flex gap-3">
+                            {categoryWords.map((word, idx) => (
+                                <CreateConnectionsWord
+                                    key={word.connectionsWordId}
+                                    word={word}
+                                    reOrderWords={reOrderWords}
+                                    difficultyShade={category.difficulty}
+                                    loading={loadingWords}
+                                    error={idx >= maxWords}
+                                    disabled={loadingWords}
+                                    onClick={() => {
+                                        setWordToUpdate(word);
+                                        setAddWordDialog(true);
+                                    }}
+                                >
+                                    {word.word}
+                                </CreateConnectionsWord>
+                            ))}
+
+                            {[...Array(Math.max(maxWords - categoryWords.length, 0))].map((_, idx) => (
+                                <Reorder.Item key={idx} value={`addWord-${idx}`} transition={{ layout: { duration: 0 } }} dragListener={false}>
+                                    <ConnectionsWordTile disabled={loadingWords} onClick={() => setAddWordDialog(true)} loading={loadingWords}>
+                                        <FontAwesomeIcon icon={faPlus} />
+                                    </ConnectionsWordTile>
+                                </Reorder.Item>
+                            ))}
+                        </div>
+                    </Reorder.Group>
+                </motion.div>
+
+                <NativeSelect onChange={(e) => handleSetDifficulty(e.target.value)} value={category.difficulty} disabled={maxWordError}>
+                    {connectionsDifficulties.map((difficulty, idx) => (
+                        <NativeSelectOption key={idx} value={idx}>
+                            {difficulty.name}
+                        </NativeSelectOption>
+                    ))}
                 </NativeSelect>
             </div>
-
+            <EditCategoryDialog
+                open={editTitleDialog}
+                setOpen={setEditTitleDialog}
+                deleteCategory={handleDeleteCategory}
+                updateTitle={handleUpdateTitle}
+                currentTitle={category.title || "Unnamed category"}
+            />
             <AddCategoryWordDialog
                 open={addWordDialog}
                 setOpen={setAddWordDialog}
@@ -168,6 +180,6 @@ export default function WriteCategory({ category, onUpdate, onDelete, maxWords }
                 currentWord={wordToUpdate}
                 openChange={closeWordDialog}
             />
-        </div>
+        </motion.div>
     );
 }

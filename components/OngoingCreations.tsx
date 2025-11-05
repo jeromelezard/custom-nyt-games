@@ -21,31 +21,34 @@ export default function OngoingCreations({ session }: { session: BetterAuthSessi
         setGames(() => games.map((game) => game));
         setLoading(false);
     }
-    if (games.length == 0) return null;
 
     useEffect(() => {
         fetchGames();
     }, []);
 
     return (
-        <div className="flex flex-col mt-3 gap-3">
-            <h2 className="font-semibold text-xl">Ongoing Connections games</h2>
-            {loading ? (
-                <span className="flex justify-center">
-                    <Spinner />
-                </span>
-            ) : (
-                games.map((game, idx) => (
-                    <Button
-                        variant={"outline"}
-                        key={game.connectionsGameId}
-                        onClick={() => router.push(`/create/connections/${game.connectionsGameId}`)}
-                        className="bg-slate-600 p-3"
-                    >
-                        {game.title ?? `Connections game #${idx + 1}`}
-                    </Button>
-                ))
-            )}
-        </div>
+        <>
+            {games.length != 0 ? (
+                <div className="flex flex-col mt-3 gap-3">
+                    <h2 className="font-semibold text-xl">Ongoing Connections games</h2>
+                    {loading ? (
+                        <span className="flex justify-center">
+                            <Spinner />
+                        </span>
+                    ) : (
+                        games.map((game, idx) => (
+                            <Button
+                                variant={"outline"}
+                                key={game.connectionsGameId}
+                                onClick={() => router.push(`/create/connections/${game.connectionsGameId}`)}
+                                className="bg-slate-600 p-3"
+                            >
+                                {game.title ?? `Connections game #${idx + 1}`}
+                            </Button>
+                        ))
+                    )}
+                </div>
+            ) : null}
+        </>
     );
 }

@@ -26,6 +26,7 @@ export default function AddCategoryWordDialog({
 }: AddCategoryWordDialogProps) {
     const [word, setWord] = useState(currentWord?.word || "");
     function handleSubmitWord() {
+        if (word.trim() == "") return;
         currentWord ? updateWord({ ...currentWord, word }) : addWord(word);
         setOpen(false);
         setWord("");
