@@ -18,6 +18,18 @@ export default async function CreateConnectionsPage({ params }: PropsWithParams)
     });
 
     if (!connectionsGame) return notFound();
+    const categoriesWithDifficulty = await prisma.connectionsCategory.findMany({
+        where: { connectionsGameId: connectionsGame.connectionsGameId, difficulty: { not: 0 } },
+        orderBy: { difficulty: "asc" },
+    });
+
+    const categoriesWithoutDifficulty = await prisma.connectionsCategory.findMany({
+        where: { connectionsGameId: connectionsGame.connectionsGameId, difficulty: 0 },
+        orderBy: { dateCreated: "asc" },
+    });
+
+    connectionsGame.categories = [...categoriesWithDifficulty, ...categoriesWithoutDifficulty];
+
     if (connectionsGame.userId != session!.user.id) return notFound();
 
     return (
